@@ -1,12 +1,16 @@
-# Databricks notebook source
 import streamlit as st
 import pandas as pd
-from knowledge_base import search_knowledge_base
+from io import BytesIO  # Added for Excel exports
+from knowledge_base import search_knowledge_base, init_knowledge_base
 from prompt_builder import build_prompt
 from notebook import run_notebook
-from data_dictionary import upload_data_dictionary, search_data_dictionary
+from data_dictionary import upload_data_dictionary, search_data_dictionary, init_data_dictionary
 from data_cleaning import clean_data
 from eda import perform_eda
+
+# Initialize databases
+init_knowledge_base()
+init_data_dictionary()
 
 st.set_page_config(page_title="Data Analytics Hub", layout="wide")
 
@@ -54,24 +58,18 @@ elif module == "Data Dictionary":
             st.write(f"Description: {result['description']}")
             st.write(f"Relationships: {result['relationships']}")
             if st.button(f"Download Table {result['table_name']}"):
-                df = pd.DataFrame([result])
+                df = pd.DataFrame([result])  # Create DF from result dict
+                # CSV download
                 st.download_button(
                     label="Download as CSV",
                     data=df.to_csv(index=False),
                     file_name=f"{result['table_name']}.csv",
                     mime="text/csv"
                 )
+                # Excel download with BytesIO fix
+                buffer = BytesIO()
+                df.to_excel(buffer, index=False, engine='openpyxl')
                 st.download_button(
                     label="Download as Excel",
-                    data=df.to_excel(index=False, engine='openpyxl'),
-                    file_name=f"{result['table_name']}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-
-elif module == "Data Cleaning":
-    st.header("Data Cleaning")
-    clean_data()
-
-elif module == "EDA":
-    st.header("Exploratory Data Analysis")
-    perform_eda()
+                    data=buffer.getvalue(),
+                    file_name=f
