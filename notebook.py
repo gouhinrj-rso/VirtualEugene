@@ -1,16 +1,23 @@
-# Databricks notebook source
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+from pyspark.sql import SparkSession
 from io import BytesIO
 
 def run_notebook():
+    # Initialize SparkSession for PySpark
+    try:
+        spark = SparkSession.builder.appName("StreamlitApp").getOrCreate()
+    except Exception as e:
+        st.warning("PySpark initialization failed; PySpark code may not work. Error: " + str(e))
+        spark = None
+    
     code = st.text_area("Enter Python/PySpark code", height=200)
     if st.button("Run Code"):
         try:
             # Create a buffer for capturing output
             output = BytesIO()
-            exec_globals = {'pd': pd, 'plt': plt}
+            exec_globals = {'pd': pd, 'plt': plt, 'spark': spark}
             exec(code, exec_globals)
             
             # If a DataFrame is created, display and offer export
@@ -24,9 +31,12 @@ def run_notebook():
                         file_name="output.csv",
                         mime="text/csv"
                     )
+                    output = BytesIO()
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                        df.to_excel(writer, index=False)
                     st.download_button(
                         label="Download as Excel",
-                        data=df.to_excel(index=False, engine='openpyxl'),
+                        data=output.getvalue(),
                         file_name="output.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
