@@ -1,4 +1,3 @@
-# Databricks notebook source
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -12,8 +11,12 @@ def perform_eda():
     else:
         uploaded_file = st.file_uploader("Upload CSV for EDA", type="csv")
         if uploaded_file:
-            df = pd.read_csv(uploaded_file)
-            st.session_state.cleaned_df = df
+            try:
+                df = pd.read_csv(uploaded_file)
+                st.session_state.cleaned_df = df
+            except Exception as e:
+                st.error(f"Error uploading CSV: {str(e)}")
+                return
         else:
             st.warning("Please upload a CSV or clean data first in the Data Cleaning module.")
             return
@@ -47,9 +50,12 @@ def perform_eda():
                 file_name="eda_data.csv",
                 mime="text/csv"
             )
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False)
             st.download_button(
                 label="Download Data as Excel",
-                data=df.to_excel(index=False, engine='openpyxl'),
+                data=output.getvalue(),
                 file_name="eda_data.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
