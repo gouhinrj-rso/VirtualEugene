@@ -1,6 +1,8 @@
 # Databricks notebook source
+import os
 import streamlit as st
 import pandas as pd
+import openai
 from knowledge_base import search_knowledge_base, init_knowledge_base
 from prompt_builder import build_prompt
 from notebook import run_notebook
@@ -8,6 +10,12 @@ from data_dictionary import upload_data_dictionary, search_data_dictionary, init
 from data_cleaning import clean_data
 from eda import perform_eda
 from io import BytesIO
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+if not openai.api_key:
+    raise ValueError(
+        "OPENAI_API_KEY environment variable is not set. Please set it in your environment or .env file."
+    )
 
 st.set_page_config(page_title="Data Analytics Hub", layout="wide", initial_sidebar_state="collapsed")
 
