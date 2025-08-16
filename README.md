@@ -12,7 +12,8 @@ Features:
 #### Data Dictionary Upload: Upload CSV with Databricks cluster metadata (databases, tables, fields, relationships) for field/table searches and recommendations.
 #### Data Cleaning Module: Upload CSV, guided cleaning with pandas/PySpark, output a clean table.
 #### EDA Module: Use cleaned table to ask questions, auto-generate Python code for visualizations, and get analysis suggestions.
- ###Export: Any rendered DataFrame/table can be exported as CSV or Excel.
+#### AI Agent: Chat with an OpenAI-powered assistant for data science questions.
+### Export: Any rendered DataFrame/table can be exported as CSV or Excel.
 
 
 
@@ -26,6 +27,7 @@ The app will be split into modular Python files for clarity, with a main app.py 
 ##### data_dictionary.py: Processes CSV data dictionary uploads and searches.
 ##### data_cleaning.py: Guides CSV cleaning and transformation.
 ##### eda.py: Handles exploratory data analysis and visualization.
+##### agents.py: Provides an OpenAI-powered assistant.
 ##### requirements.txt: Lists dependencies for deployment.
 ##### SQLite database (app.db) for storing knowledge base and data dictionary.
 
