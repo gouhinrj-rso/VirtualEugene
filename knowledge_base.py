@@ -1,5 +1,7 @@
 import sqlite3
 import streamlit as st
+import requests
+from bs4 import BeautifulSoup
 
 
 def init_knowledge_base(db_path: str = "app.db"):
@@ -59,17 +61,51 @@ def init_knowledge_base(db_path: str = "app.db"):
     conn.close()
 
 
-def search_knowledge_base(query: str, db_path: str = "app.db"):
-    """Search the knowledge base for entries matching ``query``.
+    fetch_web_docs()
 
-    Parameters
-    ----------
-    query:
-        Search string used to match against tags, title and content.
-    db_path:
-        Path to the SQLite database file. Defaults to ``"app.db"``.
-    """
-    conn = sqlite3.connect(db_path)
+
+def fetch_web_docs():
+    """Populate the knowledge base with documentation snippets fetched from the web."""
+    docs = [
+        (
+            "Databricks Documentation",
+            "https://docs.databricks.com/en/index.html",
+            "databricks",
+        ),
+        ("SQL Documentation", "https://www.w3schools.com/sql/", "sql"),
+        ("Python Documentation", "https://docs.python.org/3/", "python"),
+        ("Pandas Documentation", "https://pandas.pydata.org/docs/", "pandas"),
+        ("NumPy Documentation", "https://numpy.org/doc/stable/", "numpy"),
+        (
+            "Matplotlib Documentation",
+            "https://matplotlib.org/stable/index.html",
+            "matplotlib",
+        ),
+    ]
+
+    conn = sqlite3.connect("app.db")
+    c = conn.cursor()
+
+    for title, url, tag in docs:
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
+            content = " ".join(p.get_text() for p in soup.find_all("p")[:5])
+            code = "\n".join(code.get_text() for code in soup.find_all("code")[:3])
+            c.execute(
+                "INSERT OR IGNORE INTO knowledge_base (title, content, code, tags) VALUES (?, ?, ?, ?)",
+                (title, content, code, f"{tag},documentation"),
+            )
+        except Exception as e:
+            print(f"Failed to fetch {url}: {e}")
+
+    conn.commit()
+    conn.close()
+
+def search_knowledge_base(query):
+    conn = sqlite3.connect('app.db')
+
     c = conn.cursor()
     c.execute(
         "SELECT title, content, code FROM knowledge_base WHERE tags LIKE ? OR title LIKE ? OR content LIKE ?",
