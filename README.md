@@ -35,3 +35,22 @@ The app will be split into modular Python files for clarity, with a main app.py 
 
 ## Implementation
 Below is the complete code for the app. Each module is designed to be modular and reusable, with Streamlit providing the interactive UI. I'll include comments for clarity and instructions for deployment at the end.
+
+
+## OpenAI API Key Setup
+Some features use OpenAI's API. Install requirements and provide an API key through an environment variable.
+
+### Using shell environment
+```bash
+export OPENAI_API_KEY=sk-...
+```
+
+### Using a `.env` file
+Create a `.env` file (use `.env.example` as a template) with the following line:
+
+```
+OPENAI_API_KEY=sk-...
+```
+
+The application will raise an error at startup if this key is not supplied.
+
