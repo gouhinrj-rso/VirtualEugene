@@ -7,7 +7,9 @@ from notebook import run_notebook
 from data_dictionary import upload_data_dictionary, search_data_dictionary, init_data_dictionary
 from data_cleaning import clean_data
 from eda import perform_eda
+
 from etl_agent import run_etl_agent
+
 from io import BytesIO
 
 st.set_page_config(page_title="Data Analytics Hub", layout="wide", initial_sidebar_state="collapsed")
@@ -31,6 +33,7 @@ if 'cleaned_df' not in st.session_state:
     st.session_state.cleaned_df = None
 
 
+
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "Overview",
     "Data Cleaning",
@@ -41,6 +44,8 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "Prompt Builder",
     "ETL Agent",
 ])
+
+
 
 
 with tab1:
@@ -93,8 +98,7 @@ with tab7:
     st.header("Prompt Builder")
     build_prompt()
 
-
-with tab8:
+with tab:
     st.header("ETL Agent")
     run_etl_agent()
 
