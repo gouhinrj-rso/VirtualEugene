@@ -1,11 +1,26 @@
 import sqlite3
 import streamlit as st
+import requests
+from bs4 import BeautifulSoup
 
-def init_knowledge_base():
-    conn = sqlite3.connect('app.db')
+
+def init_knowledge_base(db_path: str = "app.db"):
+    """Initialize the knowledge base SQLite database.
+
+    Parameters
+    ----------
+    db_path:
+        Path to the SQLite database file. Defaults to ``"app.db"``.
+
+    The table uses a UNIQUE constraint on ``title`` so that calling this
+    function multiple times does not insert duplicate rows.
+    """
+    conn = sqlite3.connect(db_path)
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS knowledge_base 
-                 (id INTEGER PRIMARY KEY, title TEXT, content TEXT, code TEXT, tags TEXT)''')
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS knowledge_base
+                 (id INTEGER PRIMARY KEY, title TEXT UNIQUE, content TEXT, code TEXT, tags TEXT)"""
+    )
     sample_data = [
 
         ('Query and visualize data', 'Use a Databricks notebook to query sample data stored in Unity Catalog using SQL, Python, Scala, and R, and then visualize the query results in the notebook.', '', 'databricks,querying data,visualizations,notebooks'),
@@ -40,15 +55,66 @@ def init_knowledge_base():
         ('Walmart Case Study', 'Case study on Walmart using modern tools and technologies for deriving business insights and improving customer satisfaction.', '', 'data analytics'),
         ('Use the Databricks ETL agent', 'Upload a CSV or use a DataFrame to transform data with PySpark and save as a Delta table. Learn more at https://docs.databricks.com/en/delta/', '', 'databricks,etl,delta'),
     ]
-    c.executemany('INSERT OR IGNORE INTO knowledge_base (title, content, code, tags) VALUES (?, ?, ?, ?)', sample_data)
+    c.executemany(
+        "INSERT OR IGNORE INTO knowledge_base (title, content, code, tags) VALUES (?, ?, ?, ?)",
+        sample_data,
+    )
+    conn.commit()
+    conn.close()
+
+
+    fetch_web_docs()
+
+
+def fetch_web_docs():
+    """Populate the knowledge base with documentation snippets fetched from the web."""
+    docs = [
+        (
+            "Databricks Documentation",
+            "https://docs.databricks.com/en/index.html",
+            "databricks",
+        ),
+        ("SQL Documentation", "https://www.w3schools.com/sql/", "sql"),
+        ("Python Documentation", "https://docs.python.org/3/", "python"),
+        ("Pandas Documentation", "https://pandas.pydata.org/docs/", "pandas"),
+        ("NumPy Documentation", "https://numpy.org/doc/stable/", "numpy"),
+        (
+            "Matplotlib Documentation",
+            "https://matplotlib.org/stable/index.html",
+            "matplotlib",
+        ),
+    ]
+
+    conn = sqlite3.connect("app.db")
+    c = conn.cursor()
+
+    for title, url, tag in docs:
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
+            content = " ".join(p.get_text() for p in soup.find_all("p")[:5])
+            code = "\n".join(code.get_text() for code in soup.find_all("code")[:3])
+            c.execute(
+                "INSERT OR IGNORE INTO knowledge_base (title, content, code, tags) VALUES (?, ?, ?, ?)",
+                (title, content, code, f"{tag},documentation"),
+            )
+        except Exception as e:
+            print(f"Failed to fetch {url}: {e}")
+
     conn.commit()
     conn.close()
 
 def search_knowledge_base(query):
     conn = sqlite3.connect('app.db')
+
     c = conn.cursor()
-    c.execute("SELECT title, content, code FROM knowledge_base WHERE tags LIKE ? OR title LIKE ? OR content LIKE ?", 
-              (f'%{query}%', f'%{query}%', f'%{query}%'))
-    results = [{'title': row[0], 'content': row[1], 'code': row[2]} for row in c.fetchall()]
+    c.execute(
+        "SELECT title, content, code FROM knowledge_base WHERE tags LIKE ? OR title LIKE ? OR content LIKE ?",
+        (f"%{query}%", f"%{query}%", f"%{query}%"),
+    )
+    results = [
+        {"title": row[0], "content": row[1], "code": row[2]} for row in c.fetchall()
+    ]
     conn.close()
     return results
