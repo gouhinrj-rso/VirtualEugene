@@ -1,3 +1,5 @@
+#1548
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -5,7 +7,6 @@ import seaborn as sns
 from io import BytesIO
 
 def perform_eda():
-    # Check for cleaned DataFrame or new upload
     if st.session_state.cleaned_df is not None:
         df = st.session_state.cleaned_df
         st.write("Using Cleaned Data:", df.head(10))  # Limit preview to 10 rows
@@ -36,7 +37,7 @@ def perform_eda():
 
     # Ask questions
     st.subheader("Ask About Your Data")
-    question = st.text_input("Ask a question (e.g., 'Show distribution of sales', 'Correlation matrix', 'Mean of price')")
+    question = st.text_input("Ask a question (e.g., 'Show distribution of sales')")
     if question:
         try:
             # Expanded question parsing
