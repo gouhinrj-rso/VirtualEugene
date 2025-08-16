@@ -8,6 +8,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 from io import BytesIO, StringIO
 import sys
+import re
+from openai_agent import run_agent
 
 def run_notebook():
     st.header("Notebook Module")
@@ -291,6 +293,7 @@ def get_error_fix_suggestions(error_msg, code):
     return suggestions[:3]
 
 def get_assistant_response(query, code, exec_globals):
+
     query = query.lower()
     response = {'text': "Here's how you can proceed:"}
 
