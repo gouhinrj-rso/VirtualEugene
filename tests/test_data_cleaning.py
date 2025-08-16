@@ -1,5 +1,5 @@
-import io
 from pathlib import Path
+import io
 import sys
 
 # ensure module import
