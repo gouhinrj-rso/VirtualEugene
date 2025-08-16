@@ -3,11 +3,24 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 
-def init_knowledge_base():
-    conn = sqlite3.connect('app.db')
+
+def init_knowledge_base(db_path: str = "app.db"):
+    """Initialize the knowledge base SQLite database.
+
+    Parameters
+    ----------
+    db_path:
+        Path to the SQLite database file. Defaults to ``"app.db"``.
+
+    The table uses a UNIQUE constraint on ``title`` so that calling this
+    function multiple times does not insert duplicate rows.
+    """
+    conn = sqlite3.connect(db_path)
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS knowledge_base 
-                 (id INTEGER PRIMARY KEY, title TEXT, content TEXT, code TEXT, tags TEXT)''')
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS knowledge_base
+                 (id INTEGER PRIMARY KEY, title TEXT UNIQUE, content TEXT, code TEXT, tags TEXT)"""
+    )
     sample_data = [
         ('Query and visualize data', 'Use a Databricks notebook to query sample data stored in Unity Catalog using SQL, Python, Scala, and R, and then visualize the query results in the notebook.', '', 'databricks,querying data,visualizations,notebooks'),
         ('Import and visualize CSV data from a notebook', 'Use a Databricks notebook to import data from a CSV file containing baby name data from https://health.data.ny.gov into your Unity Catalog volume using Python, Scala, and R. You also learn to modify a column name, visualize the data, and save to a table.', '', 'databricks,querying data,visualizations,notebooks,data analytics'),
@@ -40,9 +53,13 @@ def init_knowledge_base():
         ('Best Practices for Data Analytics', 'Prerequisites include ability to work with numbers, some programming experience, willingness to learn statistical concepts, and passion for problem-solving. Applications include improved decision making, effective marketing, better customer service.', '', 'data analytics,best practices'),
         ('Walmart Case Study', 'Case study on Walmart using modern tools and technologies for deriving business insights and improving customer satisfaction.', '', 'data analytics')
     ]
-    c.executemany('INSERT OR IGNORE INTO knowledge_base (title, content, code, tags) VALUES (?, ?, ?, ?)', sample_data)
+    c.executemany(
+        "INSERT OR IGNORE INTO knowledge_base (title, content, code, tags) VALUES (?, ?, ?, ?)",
+        sample_data,
+    )
     conn.commit()
     conn.close()
+
 
     fetch_web_docs()
 
@@ -88,9 +105,14 @@ def fetch_web_docs():
 
 def search_knowledge_base(query):
     conn = sqlite3.connect('app.db')
+
     c = conn.cursor()
-    c.execute("SELECT title, content, code FROM knowledge_base WHERE tags LIKE ? OR title LIKE ? OR content LIKE ?", 
-              (f'%{query}%', f'%{query}%', f'%{query}%'))
-    results = [{'title': row[0], 'content': row[1], 'code': row[2]} for row in c.fetchall()]
+    c.execute(
+        "SELECT title, content, code FROM knowledge_base WHERE tags LIKE ? OR title LIKE ? OR content LIKE ?",
+        (f"%{query}%", f"%{query}%", f"%{query}%"),
+    )
+    results = [
+        {"title": row[0], "content": row[1], "code": row[2]} for row in c.fetchall()
+    ]
     conn.close()
     return results
