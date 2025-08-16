@@ -8,6 +8,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 from io import BytesIO, StringIO
 import sys
+import re
+from openai_agent import run_agent
 
 def run_notebook():
     st.header("Notebook Module")
@@ -282,47 +284,19 @@ def get_error_fix_suggestions(error_msg, code):
     return suggestions[:3]
 
 def get_assistant_response(query, code, exec_globals):
-    query = query.lower()
-    response = {'text': "Here's how you can proceed:"}
+    """Use an OpenAI-powered agent to answer coding questions."""
+    prompt = (
+        "You are a helpful coding assistant for data science tasks using Python, pandas, PySpark, and SQL. "
+        "Provide clear answers and code snippets when helpful."
+    )
+    if code:
+        prompt += "\nCurrent notebook code:\n" + code
+    prompt += "\nUser question: " + query
 
-    # Common coding queries
-    if 'group by' in query:
-        if 'df' in exec_globals and isinstance(exec_globals['df'], pd.DataFrame):
-            col = exec_globals['df'].columns[0]
-            response['code'] = f"df.groupby('{col}').sum()"
-            response['text'] = f"Group your DataFrame by a column like '{col}' and aggregate."
-        else:
-            response['code'] = "df.groupby('column').sum()"
-            response['text'] = "Group by requires a DataFrame. Load one first."
-
-    elif 'plot' in query or 'visualize' in query:
-        if 'df' in exec_globals and isinstance(exec_globals['df'], pd.DataFrame):
-            numeric_cols = exec_globals['df'].select_dtypes(include=['float64', 'int64']).columns
-            if numeric_cols.empty:
-                response['text'] = "No numeric columns for plotting. Try a different dataset."
-            else:
-                col = numeric_cols[0]
-                response['code'] = f"sns.histplot(df['{col}'])"
-                response['text'] = f"Create a histogram for '{col}'."
-        else:
-            response['code'] = "plt.plot(df['x'], df['y'])\nplt.show()"
-            response['text'] = "Load a DataFrame to plot data."
-
-    elif 'sql query' in query or 'select' in query:
-        response['code'] = "conn = sqlite3.connect('app.db')\nresult = pd.read_sql_query('SELECT * FROM data_dictionary', conn)\nconn.close()\nresult"
-        response['text'] = "Run a SQL query on the app's database (e.g., data_dictionary table)."
-
-    elif 'error' in query and code:
-        # Re-run error detection
-        try:
-            exec(code, exec_globals)
-        except Exception as e:
-            fixes = get_error_fix_suggestions(str(e), code)
-            response['text'] = f"Error detected: {str(e)}. Try these fixes:"
-            response['code'] = fixes[0].get('code', '')
-    
-    else:
-        response['text'] = "Not sure what you need. Try asking about grouping, plotting, or SQL queries."
-        response['code'] = "df.info()"
-
+    text = run_agent(prompt)
+    response = {"text": text}
+    # Extract first Python code block if present
+    match = re.search(r"```python\n(.*?)```", text, re.DOTALL)
+    if match:
+        response["code"] = match.group(1).strip()
     return response

@@ -9,6 +9,7 @@ Features:
 ### Resource Hub: Searchable knowledge base with guides for pandas, Python, Matplotlib, Data Analytics, PySpark, Databricks, and Excel.
 #### Prompt Builder: Interactive chatbot-style interface to create custom prompts with examples.
 #### Notebook Module: Jupyter-like environment for running Python/PySpark code, mimicking Databricks.
+#### Coding Assistant: Uses OpenAI's API to answer data science questions and suggest code snippets.
 #### Data Dictionary Upload: Upload CSV with Databricks cluster metadata (databases, tables, fields, relationships) for field/table searches and recommendations.
 #### Data Cleaning Module: Upload CSV, guided cleaning with pandas/PySpark, output a clean table.
 #### EDA Module: Use cleaned table to ask questions, auto-generate Python code for visualizations, and get analysis suggestions.
@@ -23,6 +24,7 @@ The app will be split into modular Python files for clarity, with a main app.py 
 ##### knowledge_base.py: Manages the searchable resource hub.
 ##### prompt_builder.py: Handles interactive prompt creation.
 ##### notebook.py: Implements the Databricks/Jupyter-like code execution.
+##### openai_agent.py: Wraps calls to the OpenAI API for agent responses.
 ##### data_dictionary.py: Processes CSV data dictionary uploads and searches.
 ##### data_cleaning.py: Guides CSV cleaning and transformation.
 ##### eda.py: Handles exploratory data analysis and visualization.
