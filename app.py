@@ -7,6 +7,7 @@ from notebook import run_notebook
 from data_dictionary import upload_data_dictionary, search_data_dictionary, init_data_dictionary
 from data_cleaning import clean_data
 from eda import perform_eda
+from etl_agent import run_etl_agent
 from io import BytesIO
 
 st.set_page_config(page_title="Data Analytics Hub", layout="wide", initial_sidebar_state="collapsed")
@@ -30,7 +31,15 @@ if 'cleaned_df' not in st.session_state:
     st.session_state.cleaned_df = None
 
 # Top-level tabs for improved navigation mapping
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Overview", "Data Cleaning", "EDA", "Notebook", "Resource Hub", "Prompt Builder"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    "Overview",
+    "Data Cleaning",
+    "EDA",
+    "Notebook",
+    "ETL Assistant",
+    "Resource Hub",
+    "Prompt Builder",
+])
 
 with tab1:
     st.header("App Overview")
@@ -62,8 +71,15 @@ with tab4:
     run_notebook()
 
 with tab5:
+    st.header("ETL Assistant")
+    run_etl_agent()
+
+with tab6:
     st.header("Resource Hub")
-    query = st.text_input("Search for guides (e.g., 'pandas groupby')", help="Search API-fetched docs and snippets.")
+    query = st.text_input(
+        "Search for guides (e.g., 'pandas groupby')",
+        help="Search API-fetched docs and snippets.",
+    )
     if query:
         results = search_knowledge_base(query)
         for result in results:
@@ -71,6 +87,6 @@ with tab5:
                 st.write(result['content'])
                 st.code(result['code'], language='python')
 
-with tab6:
+with tab7:
     st.header("Prompt Builder")
     build_prompt()
