@@ -1,6 +1,6 @@
 import io
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # ensure module import
 sys.path.append(str(Path(__file__).resolve().parents[1]))
