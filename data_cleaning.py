@@ -97,5 +97,7 @@ def clean_data():
             st.subheader("Code for Databricks")
             st.code("\n".join(code_lines), language="python")
         except Exception as e:
+
             st.error(f"Error processing data: {str(e)}")
+
 
