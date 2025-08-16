@@ -22,6 +22,7 @@ def init_knowledge_base(db_path: str = "app.db"):
                  (id INTEGER PRIMARY KEY, title TEXT UNIQUE, content TEXT, code TEXT, tags TEXT)"""
     )
     sample_data = [
+
         ('Query and visualize data', 'Use a Databricks notebook to query sample data stored in Unity Catalog using SQL, Python, Scala, and R, and then visualize the query results in the notebook.', '', 'databricks,querying data,visualizations,notebooks'),
         ('Import and visualize CSV data from a notebook', 'Use a Databricks notebook to import data from a CSV file containing baby name data from https://health.data.ny.gov into your Unity Catalog volume using Python, Scala, and R. You also learn to modify a column name, visualize the data, and save to a table.', '', 'databricks,querying data,visualizations,notebooks,data analytics'),
         ('Create a table', 'Create a table and grant privileges in Databricks using the Unity Catalog data governance model.', '', 'databricks,data analytics'),
@@ -51,7 +52,8 @@ def init_knowledge_base(db_path: str = "app.db"):
         ('Types of Data Analytics', 'Qualitative vs. Quantitative Research: Two methods used by data analysts, with differences in objectives, applications, and techniques.', '', 'data analytics'),
         ('Tools for Data Analytics', 'Python: Popular for data analytics due to libraries like NumPy. SQL: Essential for data analysis. Business Intelligence Tools: Top tools for insights.', '', 'data analytics,python,sql'),
         ('Best Practices for Data Analytics', 'Prerequisites include ability to work with numbers, some programming experience, willingness to learn statistical concepts, and passion for problem-solving. Applications include improved decision making, effective marketing, better customer service.', '', 'data analytics,best practices'),
-        ('Walmart Case Study', 'Case study on Walmart using modern tools and technologies for deriving business insights and improving customer satisfaction.', '', 'data analytics')
+        ('Walmart Case Study', 'Case study on Walmart using modern tools and technologies for deriving business insights and improving customer satisfaction.', '', 'data analytics'),
+        ('Use the Databricks ETL agent', 'Upload a CSV or use a DataFrame to transform data with PySpark and save as a Delta table. Learn more at https://docs.databricks.com/en/delta/', '', 'databricks,etl,delta'),
     ]
     c.executemany(
         "INSERT OR IGNORE INTO knowledge_base (title, content, code, tags) VALUES (?, ?, ?, ?)",

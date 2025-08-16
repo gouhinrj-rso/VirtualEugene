@@ -13,6 +13,8 @@ from eda import perform_eda
 from etl_agent import run_etl_agent
 
 from io import BytesIO
+from databricks_etl_agent import guide_etl
+from pyspark.sql import SparkSession
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 if not openai.api_key:
@@ -42,7 +44,7 @@ if 'cleaned_df' not in st.session_state:
 
 # Top-level tabs for improved navigation mapping
 
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["Overview", "Data Cleaning", "EDA", "Notebook", "Resource Hub", "Prompt Builder", "ETL Agent"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["Overview", "Data Cleaning", "EDA", "Notebook", "Resource Hub", "Prompt Builder", "Databricks ETL"])
 
 
 with tab1:
@@ -90,6 +92,11 @@ with tab6:
 
 with tab7:
 
-    st.header("ETL Agent")
-    run_etl_agent()
+    st.header("Databricks ETL")
+    table_name = st.text_input("Delta table name")
+    spark = SparkSession.builder.appName("StreamlitETL").getOrCreate()
+    status, hint = guide_etl(st.session_state.cleaned_df, table_name, spark)
+    st.write(status)
+    st.info(hint)
+
 
