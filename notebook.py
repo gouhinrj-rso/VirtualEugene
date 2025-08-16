@@ -230,14 +230,20 @@ def get_error_fix_suggestions(error_msg, code):
     lower_error = error_msg.lower()
 
     if 'nameerror' in lower_error:
-        missing_name = error_msg.split("'")[1] if "'" in error_msg else "variable"
+        try:
+            missing_name = error_msg.split("'")[1] if "'" in error_msg else "variable"
+        except IndexError:
+            missing_name = "variable"
         suggestions.append({
             'text': f"'{missing_name}' not defined. Check spelling or define it.",
             'code': f"{missing_name} = your_value" if missing_name not in ['pandas', 'numpy', 'matplotlib', 'seaborn'] else f"import {missing_name}"
         })
 
     if 'keyerror' in lower_error:
-        missing_key = error_msg.split("'")[1]
+        try:
+            missing_key = error_msg.split("'")[1] if "'" in error_msg else "column"
+        except IndexError:
+            missing_key = "column"
         suggestions.append({
             'text': f"Column '{missing_key}' not found. List available columns.",
             'code': "df.columns"
@@ -250,7 +256,10 @@ def get_error_fix_suggestions(error_msg, code):
         })
 
     if 'importerror' in lower_error:
-        missing_module = error_msg.split("'")[1]
+        try:
+            missing_module = error_msg.split("'")[1] if "'" in error_msg else "module"
+        except IndexError:
+            missing_module = "module"
         suggestions.append({
             'text': f"Module '{missing_module}' not imported.",
             'code': f"import {missing_module}"
