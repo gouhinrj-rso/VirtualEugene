@@ -8,6 +8,8 @@ from data_dictionary import upload_data_dictionary, search_data_dictionary, init
 from data_cleaning import clean_data
 from eda import perform_eda
 from io import BytesIO
+from databricks_etl_agent import guide_etl
+from pyspark.sql import SparkSession
 
 st.set_page_config(page_title="Data Analytics Hub", layout="wide", initial_sidebar_state="collapsed")
 
@@ -30,7 +32,7 @@ if 'cleaned_df' not in st.session_state:
     st.session_state.cleaned_df = None
 
 # Top-level tabs for improved navigation mapping
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Overview", "Data Cleaning", "EDA", "Notebook", "Resource Hub", "Prompt Builder"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["Overview", "Data Cleaning", "EDA", "Notebook", "Resource Hub", "Prompt Builder", "Databricks ETL"])
 
 with tab1:
     st.header("App Overview")
@@ -74,3 +76,11 @@ with tab5:
 with tab6:
     st.header("Prompt Builder")
     build_prompt()
+
+with tab7:
+    st.header("Databricks ETL")
+    table_name = st.text_input("Delta table name")
+    spark = SparkSession.builder.appName("StreamlitETL").getOrCreate()
+    status, hint = guide_etl(st.session_state.cleaned_df, table_name, spark)
+    st.write(status)
+    st.info(hint)
