@@ -1,3 +1,4 @@
+# Databricks notebook source
 import streamlit as st
 import pandas as pd
 from knowledge_base import search_knowledge_base, init_knowledge_base
@@ -8,79 +9,68 @@ from data_cleaning import clean_data
 from eda import perform_eda
 from io import BytesIO
 
-st.set_page_config(page_title="Data Analytics Hub", layout="wide")
+st.set_page_config(page_title="Data Analytics Hub", layout="wide", initial_sidebar_state="collapsed")
 
-# Initialize session state for storing cleaned data
+# Custom CSS for better style and ergonomics
+st.markdown("""
+    <style>
+    .section-divider { border-top: 1px solid #ddd; margin: 20px 0; }
+    .stButton > button { width: 100%; }
+    .stExpander { border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+""", unsafe_allow_html=True)
+
+# Initialize databases
+with st.spinner("Initializing resources and prompts from APIs..."):
+    init_knowledge_base()
+    init_data_dictionary()
+
+# Session state for cleaned data
 if 'cleaned_df' not in st.session_state:
     st.session_state.cleaned_df = None
 
-# Initialize databases
-init_knowledge_base()
-init_data_dictionary()
+# Top-level tabs for improved navigation mapping
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Overview", "Data Cleaning", "EDA", "Notebook", "Resource Hub", "Prompt Builder"])
 
-# Sidebar navigation
-st.sidebar.title("Data Analytics Hub")
-module = st.sidebar.selectbox("Select Module", [
-    "Resource Hub", "Prompt Builder", "Notebook", 
-    "Data Dictionary", "Data Cleaning", "EDA"
-])
+with tab1:
+    st.header("App Overview")
+    st.write("Welcome to your Data Analytics Hub! Start with Data Cleaning, explore in EDA, analyze in Notebook, or access resources.")
+    st.divider()  # Section divider
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("Quick Status")
+        if st.session_state.cleaned_df is not None:
+            st.success("Data loaded! Rows: " + str(st.session_state.cleaned_df.shape[0]))
+        else:
+            st.info("No data loaded yet. Go to Data Cleaning tab.")
+    with col2:
+        st.subheader("Quick Links")
+        st.markdown("- [Data Dictionary Upload](#data-dictionary)")
+        st.markdown("- [Search Resources](#resource-hub)")
+    st.expander("App Tips", expanded=True).write("Use tabs for navigation. Sidebar in modules for filters. Export data anytime.")
 
-# Main content
-st.title("Data Analytics Hub")
-
-if module == "Resource Hub":
-    st.header("Resource Hub")
-    query = st.text_input("Search for guides (e.g., 'pandas groupby')")
-    if query:
-        results = search_knowledge_base(query)
-        for result in results:
-            st.subheader(result['title'])
-            st.write(result['content'])
-            st.code(result['code'], language='python')
-
-elif module == "Prompt Builder":
-    st.header("Prompt Builder")
-    build_prompt()
-
-elif module == "Notebook":
-    st.header("Notebook")
-    run_notebook()
-
-elif module == "Data Dictionary":
-    st.header("Data Dictionary")
-    upload_data_dictionary()
-    search_term = st.text_input("Search for a field or chart")
-    if search_term:
-        results = search_data_dictionary(search_term)
-        for result in results:
-            st.write(f"Table: {result['table_name']}, Database: {result['database_name']}")
-            st.write(f"Field: {result['column_name']}, Type: {result['data_type']}")
-            st.write(f"Description: {result['description']}")
-            st.write(f"Relationships: {result['relationships']}")
-            if st.button(f"Download Table {result['table_name']}"):
-                df = pd.DataFrame([result])
-                # CSV export
-                st.download_button(
-                    label="Download as CSV",
-                    data=df.to_csv(index=False),
-                    file_name=f"{result['table_name']}.csv",
-                    mime="text/csv"
-                )
-                # Excel export
-                output = BytesIO()
-                with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    df.to_excel(writer, index=False)
-                st.download_button(
-                    label="Download as Excel",
-                    data=output.getvalue(),
-                    file_name=f"{result['table_name']}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-
-elif module == "Data Cleaning":
+with tab2:
     st.header("Data Cleaning")
     clean_data()
 
-elif module == "EDA":
-    st.header("Exploratory Data Analysis")
+with tab3:
+    st.header("Exploratory Data Analysis (EDA)")
     perform_eda()
+
+with tab4:
+    st.header("Notebook")
+    run_notebook()
+
+with tab5:
+    st.header("Resource Hub")
+    query = st.text_input("Search for guides (e.g., 'pandas groupby')", help="Search API-fetched docs and snippets.")
+    if query:
+        results = search_knowledge_base(query)
+        for result in results:
+            with st.expander(result['title']):
+                st.write(result['content'])
+                st.code(result['code'], language='python')
+
+with tab6:
+    st.header("Prompt Builder")
+    build_prompt()
