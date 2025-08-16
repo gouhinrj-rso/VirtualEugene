@@ -1,5 +1,7 @@
 import sqlite3
 import streamlit as st
+import requests
+from bs4 import BeautifulSoup
 
 def init_knowledge_base():
     conn = sqlite3.connect('app.db')
@@ -39,6 +41,48 @@ def init_knowledge_base():
         ('Walmart Case Study', 'Case study on Walmart using modern tools and technologies for deriving business insights and improving customer satisfaction.', '', 'data analytics')
     ]
     c.executemany('INSERT OR IGNORE INTO knowledge_base (title, content, code, tags) VALUES (?, ?, ?, ?)', sample_data)
+    conn.commit()
+    conn.close()
+
+    fetch_web_docs()
+
+
+def fetch_web_docs():
+    """Populate the knowledge base with documentation snippets fetched from the web."""
+    docs = [
+        (
+            "Databricks Documentation",
+            "https://docs.databricks.com/en/index.html",
+            "databricks",
+        ),
+        ("SQL Documentation", "https://www.w3schools.com/sql/", "sql"),
+        ("Python Documentation", "https://docs.python.org/3/", "python"),
+        ("Pandas Documentation", "https://pandas.pydata.org/docs/", "pandas"),
+        ("NumPy Documentation", "https://numpy.org/doc/stable/", "numpy"),
+        (
+            "Matplotlib Documentation",
+            "https://matplotlib.org/stable/index.html",
+            "matplotlib",
+        ),
+    ]
+
+    conn = sqlite3.connect("app.db")
+    c = conn.cursor()
+
+    for title, url, tag in docs:
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
+            content = " ".join(p.get_text() for p in soup.find_all("p")[:5])
+            code = "\n".join(code.get_text() for code in soup.find_all("code")[:3])
+            c.execute(
+                "INSERT OR IGNORE INTO knowledge_base (title, content, code, tags) VALUES (?, ?, ?, ?)",
+                (title, content, code, f"{tag},documentation"),
+            )
+        except Exception as e:
+            print(f"Failed to fetch {url}: {e}")
+
     conn.commit()
     conn.close()
 
