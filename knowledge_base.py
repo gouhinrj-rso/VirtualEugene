@@ -61,10 +61,10 @@ def init_knowledge_base(db_path: str = "app.db"):
     conn.close()
 
 
-    fetch_web_docs()
+    fetch_web_docs(db_path)
 
 
-def fetch_web_docs():
+def fetch_web_docs(db_path="app.db"):
     """Populate the knowledge base with documentation snippets fetched from the web."""
     docs = [
         (
@@ -83,7 +83,7 @@ def fetch_web_docs():
         ),
     ]
 
-    conn = sqlite3.connect("app.db")
+    conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
     for title, url, tag in docs:
@@ -103,8 +103,8 @@ def fetch_web_docs():
     conn.commit()
     conn.close()
 
-def search_knowledge_base(query):
-    conn = sqlite3.connect('app.db')
+def search_knowledge_base(query, db_path="app.db"):
+    conn = sqlite3.connect(db_path)
 
     c = conn.cursor()
     c.execute(
