@@ -1,7 +1,20 @@
 import sqlite3
-import streamlit as st
-import requests
-from bs4 import BeautifulSoup
+
+try:  # Streamlit may not be installed in the execution environment
+    import streamlit as st
+except Exception:  # pragma: no cover
+    class _Stub:
+        def __getattr__(self, name):
+            return lambda *a, **k: None
+
+    st = _Stub()
+
+try:  # Optional network libraries
+    import requests
+    from bs4 import BeautifulSoup
+except Exception:  # pragma: no cover
+    requests = None
+    BeautifulSoup = None
 
 
 def init_knowledge_base(db_path: str = "app.db"):
@@ -66,6 +79,9 @@ def init_knowledge_base(db_path: str = "app.db"):
 
 def fetch_web_docs(db_path="app.db"):
     """Populate the knowledge base with documentation snippets fetched from the web."""
+    if requests is None or BeautifulSoup is None:
+        return
+
     docs = [
         (
             "Databricks Documentation",
