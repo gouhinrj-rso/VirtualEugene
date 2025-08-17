@@ -1,96 +1,97 @@
-import sqlite3
-import pandas as pd
+
 import streamlit as st
-
-
-def load_data_dictionary():
-    """Load data dictionary from the SQLite database."""
-    conn = sqlite3.connect('app.db')
-    df = pd.read_sql_query('SELECT * FROM data_dictionary', conn)
-    conn.close()
-    return df
-
-
-def find_relevant_fields(df: pd.DataFrame, query: str) -> pd.DataFrame:
-    """Return rows in the data dictionary matching the user's query."""
-    query_lower = query.lower()
-    mask = (
-        df['column_name'].str.contains(query_lower, case=False, na=False)
-        | df['description'].str.contains(query_lower, case=False, na=False)
-        | df['table_name'].str.contains(query_lower, case=False, na=False)
-    )
-    return df[mask]
-
-
-def parse_relationships(rel_str: str):
-    """Parse relationship strings of the form 'table1.col -> table2.col'."""
-    relationships = []
-    if pd.isna(rel_str) or not rel_str:
-        return relationships
-    parts = [p.strip() for p in rel_str.split(';') if '->' in p]
-    for part in parts:
-        left, right = part.split('->')
-        relationships.append({'left': left.strip(), 'right': right.strip()})
-    return relationships
-
-
-def build_etl_plan(df: pd.DataFrame, tables: list) -> list:
-    """Create a basic ETL plan using relationships between tables."""
-    steps = []
-    if not tables:
-        return steps
-
-    base_table = tables[0]
-    steps.append(f"Load table `{base_table}`")
-    used_tables = {base_table}
-
-    table_rels = df[['table_name', 'relationships']].drop_duplicates()
-    for table in tables[1:]:
-        row = table_rels[table_rels['table_name'] == table]
-        rels = []
-        if not row.empty:
-            rels = parse_relationships(row.iloc[0]['relationships'])
-        join_step = None
-        for rel in rels:
-            left_table = rel['left'].split('.')[0]
-            right_table = rel['right'].split('.')[0]
-            if left_table in used_tables:
-                join_step = f"Join `{table}` on {rel['left']} = {rel['right']}"
-                break
-            if right_table in used_tables:
-                join_step = f"Join `{table}` on {rel['right']} = {rel['left']}"
-                break
-        if join_step:
-            steps.append(join_step)
-            used_tables.add(table)
-        else:
-            steps.append(f"Consider joining `{table}`; relationship not found in dictionary")
-    steps.append("Select necessary columns and apply transformations")
-    return steps
-
+import sqlite3
+from notebook import SparkSession
+from pyspark.sql import functions as F
+from knowledge_base import search_knowledge_base
 
 def run_etl_agent():
-    """Streamlit UI for the ETL agent."""
-    st.subheader("ETL Agent")
-    query = st.text_input("Describe your analysis goal or the data you need")
-    if not query:
-        return
-
-    df = load_data_dictionary()
-    results = find_relevant_fields(df, query)
-    if results.empty:
-        st.info("No matching fields found in data dictionary")
-        return
-
-    st.write("Suggested fields:")
-    st.dataframe(
-        results[['database_name', 'table_name', 'column_name', 'description']]
+    """Simple Streamlit-based ETL assistant using Spark."""
+    st.info(
+        "Upload a CSV or use cleaned data from session state to perform ETL steps with Spark."
     )
 
-    tables = results['table_name'].unique().tolist()
-    steps = build_etl_plan(df, tables)
-    if steps:
-        st.write("Proposed ETL pipeline:")
-        for i, step in enumerate(steps, start=1):
-            st.write(f"{i}. {step}")
+    if st.button("Get ETL Help"):
+        resources = search_knowledge_base("ETL")
+        for res in resources:
+            with st.expander(res["title"], expanded=False):
+                st.write(res["content"])
+                if res["code"]:
+                    st.code(res["code"], language="python")
 
+    uploaded_file = st.file_uploader("Upload CSV", type="csv")
+    spark = SparkSession.builder.appName("ETLAgent").getOrCreate()
+    sdf = None
+    if uploaded_file is not None:
+        sdf = spark.read.csv(uploaded_file, header=True, inferSchema=True)
+        st.success("Loaded file into Spark DataFrame.")
+    elif st.session_state.get("cleaned_df") is not None:
+        sdf = spark.createDataFrame(st.session_state.cleaned_df)
+        st.success("Using cleaned DataFrame from session state.")
+
+    if sdf is None:
+        st.warning("Please upload a CSV or clean data first.")
+        return
+
+    st.subheader("Column Selection")
+    cols = sdf.columns
+    selected_cols = st.multiselect("Select columns", cols, default=cols)
+    sdf = sdf.select(*selected_cols)
+    st.write(sdf.limit(10).toPandas())
+
+    st.subheader("Transformations")
+    transform = st.selectbox(
+        "Choose a transformation",
+        ["None", "Uppercase a column", "Filter rows"],
+    )
+    if transform == "Uppercase a column":
+        string_cols = [c for c, t in sdf.dtypes if t == "string"]
+        if string_cols:
+            col_name = st.selectbox("Column", string_cols)
+            sdf = sdf.withColumn(f"{col_name}_upper", F.upper(F.col(col_name)))
+    elif transform == "Filter rows":
+        col_name = st.selectbox("Column", selected_cols)
+        value = st.text_input("Value equals")
+        if value:
+            sdf = sdf.filter(F.col(col_name) == value)
+
+    st.write("Transformed Preview:")
+    st.write(sdf.limit(10).toPandas())
+
+    st.subheader("Write Output")
+    write_option = st.selectbox(
+        "Write option", ["None", "Download CSV", "Save to SQLite table"]
+    )
+    if write_option == "Download CSV":
+        pdf = sdf.toPandas()
+        st.download_button(
+            "Download CSV",
+            data=pdf.to_csv(index=False),
+            file_name="etl_output.csv",
+            mime="text/csv",
+        )
+    elif write_option == "Save to SQLite table":
+        table_name = st.text_input("Table name", "etl_table")
+        if st.button("Save to table"):
+            pdf = sdf.toPandas()
+            conn = sqlite3.connect("app.db")
+            pdf.to_sql(table_name, conn, if_exists="replace", index=False)
+            conn.close()
+            st.success(f"Saved to table '{table_name}'.")
+
+    st.markdown("### Sample ETL pipeline")
+    sample_code = '''\
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import upper
+
+spark = SparkSession.builder.getOrCreate()
+# Read
+sdf = spark.read.csv("input.csv", header=True, inferSchema=True)
+# Transform
+sdf = sdf.select("col1", "col2")
+sdf = sdf.withColumn("col1_upper", upper("col1"))
+# Write
+def_df = sdf.toPandas()
+def_df.to_sql("my_table", sqlite3.connect("app.db"), if_exists="replace", index=False)
+'''
+    st.code(sample_code, language="python")

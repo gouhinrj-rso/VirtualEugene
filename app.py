@@ -40,9 +40,20 @@ with st.spinner("Initializing resources and prompts from APIs..."):
 if 'cleaned_df' not in st.session_state:
     st.session_state.cleaned_df = None
 
-# Top-level tabs for improved navigation mapping
 
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["Overview", "Data Cleaning", "EDA", "Notebook", "Resource Hub", "Prompt Builder", "ETL Agent"])
+
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+    "Overview",
+    "Data Cleaning",
+    "EDA",
+    "Notebook",
+    "ETL Assistant",
+    "Resource Hub",
+    "Prompt Builder",
+    "ETL Agent",
+])
+
+
 
 
 with tab1:
@@ -75,8 +86,15 @@ with tab4:
     run_notebook()
 
 with tab5:
+    st.header("ETL Assistant")
+    run_etl_agent()
+
+with tab6:
     st.header("Resource Hub")
-    query = st.text_input("Search for guides (e.g., 'pandas groupby')", help="Search API-fetched docs and snippets.")
+    query = st.text_input(
+        "Search for guides (e.g., 'pandas groupby')",
+        help="Search API-fetched docs and snippets.",
+    )
     if query:
         results = search_knowledge_base(query)
         for result in results:
@@ -84,12 +102,11 @@ with tab5:
                 st.write(result['content'])
                 st.code(result['code'], language='python')
 
-with tab6:
+with tab7:
     st.header("Prompt Builder")
     build_prompt()
 
-with tab7:
-
+with tab:
     st.header("ETL Agent")
     run_etl_agent()
 
