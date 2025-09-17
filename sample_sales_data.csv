@@ -1,0 +1,16 @@
+Product_ID,Product_Name,Category,Price,Units_Sold,Revenue,Discount_Percent,Date_Sold,Customer_Segment
+P001,Wireless Headphones,Electronics,99.99,1200,119988,10,2024-01-15,Consumer
+P002,Office Chair,Furniture,249.99,800,199992,15,2024-01-20,Business
+P003,Coffee Maker,Appliances,79.99,1500,119985,5,2024-02-10,Consumer
+P004,Laptop Stand,Electronics,39.99,2000,79980,8,2024-02-15,Business
+P005,Desk Lamp,Furniture,34.99,1800,62982,12,2024-03-01,Consumer
+P006,Bluetooth Speaker,Electronics,59.99,1100,65989,7,2024-03-05,Consumer
+P007,Ergonomic Keyboard,Electronics,89.99,900,80991,6,2024-03-20,Business
+P008,Filing Cabinet,Furniture,159.99,600,95994,20,2024-04-02,Business
+P009,Water Bottle,Accessories,19.99,3000,59970,0,2024-04-10,Consumer
+P010,Monitor Stand,Electronics,49.99,1600,79984,9,2024-05-01,Business
+P011,Desk Organizer,Accessories,24.99,2200,54978,3,2024-05-15,Consumer
+P012,Wireless Mouse,Electronics,29.99,2500,74975,11,2024-06-01,Consumer
+P013,Bookshelf,Furniture,199.99,500,99995,25,2024-06-20,Consumer
+P014,Tablet Stand,Electronics,34.99,1700,59483,14,2024-07-05,Business
+P015,Desk Pad,Accessories,39.99,1400,55986,13,2024-07-25,Consumer

@@ -11,7 +11,7 @@ def run_etl_agent():
         "Upload a CSV or use cleaned data from session state to perform ETL steps with Spark."
     )
 
-    if st.button("Get ETL Help"):
+    if st.button("Get ETL Help", key="etl_help_button"):
         resources = search_knowledge_base("ETL")
         for res in resources:
             with st.expander(res["title"], expanded=False):

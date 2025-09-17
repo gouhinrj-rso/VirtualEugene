@@ -3,3 +3,17 @@
 
 # Python cache
 __pycache__/
+
+# Demo output files
+demo_*.png
+department_summary.csv
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
