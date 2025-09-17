@@ -56,7 +56,7 @@ if 'cleaned_df' not in st.session_state:
 
 
 
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "Overview",
     "Data Cleaning",
     "EDA",
@@ -64,7 +64,6 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "ETL Assistant",
     "Resource Hub",
     "Prompt Builder",
-    "ETL Agent",
 ])
 
 
@@ -308,8 +307,4 @@ with tab6:
 with tab7:
     st.header("Prompt Builder")
     build_prompt()
-
-with tab8:
-    st.header("ETL Agent")
-    run_etl_agent()
 
