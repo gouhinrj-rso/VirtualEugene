@@ -148,32 +148,44 @@ def run_notebook():
 def get_code_suggestions(exec_globals):
     suggestions = []
     
-    # Base suggestions
+    # Base suggestions with comprehensive examples
     suggestions.extend([
-        {'text': "Load a CSV file", 'code': "df = pd.read_csv('your_file.csv')"},
-        {'text': "Preview DataFrame", 'code': "df.head()"},
-        {'text': "Basic plot", 'code': "plt.plot(df['x'], df['y'])\nplt.show()"},
-        {'text': "SQL query on app database", 'code': "conn = sqlite3.connect('app.db')\nresult = pd.read_sql_query('SELECT * FROM data_dictionary', conn)\nconn.close()\nresult"}
+        {'text': "Load sample employee data", 'code': "# Load sample employee data\ndf = pd.read_csv('sample_data.csv')\nprint(f'Loaded {len(df)} employees')\ndf.head()"},
+        {'text': "Load sample sales data", 'code': "# Load sample sales data\nsales_df = pd.read_csv('sample_sales_data.csv')\nprint(f'Loaded {len(sales_df)} sales records')\nsales_df.head()"},
+        {'text': "Data overview and statistics", 'code': "# Get comprehensive data overview\nprint('Dataset shape:', df.shape)\nprint('\\nColumn info:')\nprint(df.info())\nprint('\\nSummary statistics:')\ndf.describe()"},
+        {'text': "Data quality check", 'code': "# Check for missing values and duplicates\nprint('Missing values per column:')\nprint(df.isnull().sum())\nprint(f'\\nDuplicate rows: {df.duplicated().sum()}')\nprint(f'Unique values per column:')\nfor col in df.columns:\n    print(f'{col}: {df[col].nunique()}')"},
+        {'text': "Basic data visualization", 'code': "# Create basic visualizations\nfig, axes = plt.subplots(2, 2, figsize=(12, 10))\n\n# Histogram of first numeric column\nnumeric_cols = df.select_dtypes(include=['int64', 'float64']).columns\nif len(numeric_cols) > 0:\n    df[numeric_cols[0]].hist(ax=axes[0,0], bins=20)\n    axes[0,0].set_title(f'Distribution of {numeric_cols[0]}')\n\n# Box plot if we have categorical and numeric columns\ncat_cols = df.select_dtypes(include=['object']).columns\nif len(cat_cols) > 0 and len(numeric_cols) > 0:\n    df.boxplot(column=numeric_cols[0], by=cat_cols[0], ax=axes[0,1])\n    axes[0,1].set_title(f'{numeric_cols[0]} by {cat_cols[0]}')\n\n# Correlation heatmap if multiple numeric columns\nif len(numeric_cols) > 1:\n    sns.heatmap(df[numeric_cols].corr(), annot=True, cmap='coolwarm', ax=axes[1,0])\n    axes[1,0].set_title('Correlation Matrix')\n\n# Value counts for first categorical column\nif len(cat_cols) > 0:\n    df[cat_cols[0]].value_counts().plot(kind='bar', ax=axes[1,1])\n    axes[1,1].set_title(f'Count of {cat_cols[0]}')\n    axes[1,1].tick_params(axis='x', rotation=45)\n\nplt.tight_layout()\nplt.show()"},
+        {'text': "SQL query on app database", 'code': "# Query the app's internal database\nconn = sqlite3.connect('app.db')\nresult = pd.read_sql_query('SELECT * FROM data_dictionary LIMIT 10', conn)\nconn.close()\nprint(f'Found {len(result)} records in data_dictionary')\nresult"}
     ])
 
-    # Context-aware suggestions
+    # Context-aware suggestions based on loaded data
     if 'df' in exec_globals and isinstance(exec_globals['df'], pd.DataFrame):
-        numeric_cols = exec_globals['df'].select_dtypes(include=['float64', 'int64']).columns
+        df = exec_globals['df']
+        numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
+        cat_cols = df.select_dtypes(include=['object']).columns
+        
         if not numeric_cols.empty:
             col = numeric_cols[0]
             suggestions.extend([
-                {'text': f"Group by a column in DataFrame", 'code': f"df.groupby('{col}').sum()"},
-                {'text': f"Plot histogram of {col}", 'code': f"sns.histplot(df['{col}'])"},
-                {'text': "Check correlations", 'code': "df.corr(numeric_only=True)"}
+                {'text': f"Advanced analysis of {col}", 'code': f"# Detailed analysis of {col}\nprint(f'{col} statistics:')\nprint(f'Mean: ' + str(df['{col}'].mean().round(2)))\nprint(f'Median: ' + str(df['{col}'].median().round(2)))\nprint(f'Std Dev: ' + str(df['{col}'].std().round(2)))\nprint(f'Min: ' + str(df['{col}'].min()))\nprint(f'Max: ' + str(df['{col}'].max()))\n\n# Quartiles and outliers\nQ1 = df['{col}'].quantile(0.25)\nQ3 = df['{col}'].quantile(0.75)\nIQR = Q3 - Q1\noutliers = df[(df['{col}'] < Q1 - 1.5*IQR) | (df['{col}'] > Q3 + 1.5*IQR)]\nprint(f'Outliers detected: ' + str(len(outliers)))\n\n# Visualization\nfig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))\nsns.histplot(df['{col}'], kde=True, ax=ax1)\nax1.set_title(f'Distribution of {col}')\nsns.boxplot(y=df['{col}'], ax=ax2)\nax2.set_title(f'Box Plot of {col}')\nplt.show()"},
+                {'text': "Group analysis and aggregation", 'code': f"# Group analysis example\nif len(df.select_dtypes(include=['object']).columns) > 0:\n    group_col = df.select_dtypes(include=['object']).columns[0]\n    grouped = df.groupby(group_col)['{col}'].agg(['count', 'mean', 'median', 'std']).round(2)\n    print(f'{col} statistics by category:')\n    print(grouped)\n    \n    # Visualization\n    plt.figure(figsize=(10, 6))\n    df.groupby(group_col)['{col}'].mean().plot(kind='bar')\n    plt.title(f'Average {col} by Category')\n    plt.xticks(rotation=45)\n    plt.ylabel(f'Average {col}')\n    plt.show()"},
             ])
+        
+        if len(cat_cols) > 0:
+            cat_col = cat_cols[0]
+            suggestions.append({
+                'text': f"Categorical analysis of {cat_col}",
+                'code': f"# Analyze {cat_col} distribution\nvalue_counts = df['{cat_col}'].value_counts()\nprint(f'{cat_col} distribution:')\nprint(value_counts)\nprint(f'\\nPercentage distribution:')\nprint((value_counts / len(df) * 100).round(2))\n\n# Visualization\nfig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))\n\n# Bar chart\nvalue_counts.plot(kind='bar', ax=ax1)\nax1.set_title(f'Count of {cat_col}')\nax1.tick_params(axis='x', rotation=45)\n\n# Pie chart\nvalue_counts.plot(kind='pie', ax=ax2, autopct='%1.1f%%')\nax2.set_title(f'Distribution of {cat_col}')\nax2.set_ylabel('')\n\nplt.tight_layout()\nplt.show()"
+            })
 
+    # PySpark suggestions
     if 'spark' in exec_globals and exec_globals['spark'] is not None:
         suggestions.extend([
-            {'text': "Load CSV in PySpark", 'code': "df = spark.read.csv('your_file.csv', header=True, inferSchema=True)"},
-            {'text': "Filter PySpark DataFrame", 'code': "df.filter(col('your_column') > value)"}
+            {'text': "PySpark DataFrame operations", 'code': "# Convert pandas DataFrame to Spark DataFrame\nif 'df' in locals():\n    spark_df = spark.createDataFrame(df)\n    print(f'Created Spark DataFrame with {spark_df.count()} rows')\n    spark_df.printSchema()\n    spark_df.show(5)\nelse:\n    # Load data directly with Spark\n    spark_df = spark.read.csv('sample_data.csv', header=True, inferSchema=True)\n    spark_df.show(5)"},
+            {'text': "PySpark SQL example", 'code': "# SQL operations with Spark\nif 'spark_df' in locals():\n    spark_df.createOrReplaceTempView('data_table')\n    \n    # Example SQL queries\n    result1 = spark.sql('SELECT * FROM data_table LIMIT 10')\n    result1.show()\n    \n    # Aggregation example\n    if 'Department' in [col.name for col in spark_df.schema]:\n        result2 = spark.sql('''\n            SELECT Department, \n                   COUNT(*) as employee_count,\n                   AVG(Salary) as avg_salary\n            FROM data_table \n            GROUP BY Department \n            ORDER BY avg_salary DESC\n        ''')\n        result2.show()"}
         ])
 
-    return suggestions[:5]  # Limit to 5 for performance
+    return suggestions[:8]  # Show more suggestions for better examples
 
 def get_next_step_suggestions(code, exec_globals):
     suggestions = []
