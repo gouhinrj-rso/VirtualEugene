@@ -4,6 +4,8 @@ import pandas as pd
 
 def guide_etl(df: pd.DataFrame, table_name: str, spark):
     try:
+        if spark is None:
+            return "ETL unavailable: PySpark is not initialized.", "Ensure PySpark is correctly installed and configured."
         if df is None:
             uploaded_file = st.file_uploader("Upload CSV for ETL", type="csv")
             if uploaded_file is None:

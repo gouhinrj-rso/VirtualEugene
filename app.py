@@ -94,7 +94,11 @@ with tab7:
 
     st.header("Databricks ETL")
     table_name = st.text_input("Delta table name")
-    spark = SparkSession.builder.appName("StreamlitETL").getOrCreate()
+    try:
+        spark = SparkSession.builder.appName("StreamlitETL").getOrCreate()
+    except Exception as _spark_err:
+        st.warning(f"PySpark initialization failed. ETL features may not work. Error: {_spark_err}")
+        spark = None
     status, hint = guide_etl(st.session_state.cleaned_df, table_name, spark)
     st.write(status)
     st.info(hint)

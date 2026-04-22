@@ -8,5 +8,4 @@ databricks-sdk
 openai==1.99.9
 requests==2.32.3
 beautifulsoup4==4.12.3
-openai>=1.0.0
 
